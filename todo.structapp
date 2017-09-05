@@ -1,0 +1,34 @@
+TODO:
+
+HTTPS
+Proper login/signup error to user
+Template functions for showing logged in users a logout-button etc.
+
+
+Users-table
+-----
+CREATE TABLE Users
+(
+    UserID INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    Email VARCHAR(255) NOT NULL,
+    Username VARCHAR(32) NOT NULL,
+    Password BINARY(60) NOT NULL,
+    UserURL VARCHAR(10) NOT NULL,
+    CreatedOn TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+CREATE INDEX Users_UserURL_index ON Users (UserURL)
+
+Posts-table
+-----
+CREATE TABLE Posts
+(
+    PostID INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    Title VARCHAR(255) NOT NULL,
+    Content TEXT NOT NULL,
+    PostURL VARCHAR(10) NOT NULL,
+    CreatorID INT(11) NOT NULL,
+    CreatedOn TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT Posts_Users_UserID_fk FOREIGN KEY (CreatorID) REFERENCES Users (UserID) ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE INDEX Posts_PostURL_index ON Posts (PostURL);
+CREATE INDEX Posts_Users_UserID_fk ON Posts (CreatorID)
