@@ -5,30 +5,46 @@ Proper login/signup error to user
 Template functions for showing logged in users a logout-button etc.
 
 
-Users-table
------
-CREATE TABLE Users
+create table Users
 (
-    UserID INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
-    Email VARCHAR(255) NOT NULL,
-    Username VARCHAR(32) NOT NULL,
-    Password BINARY(60) NOT NULL,
-    UserURL VARCHAR(10) NOT NULL,
-    CreatedOn TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
-);
-CREATE INDEX Users_UserURL_index ON Users (UserURL)
+  Email varchar(255) not null,
+  Username varchar(32) not null,
+  Password binary(60) not null,
+  UserURL varchar(10) not null
+    primary key,
+  CreatedOn timestamp default CURRENT_TIMESTAMP not null
+)
+;
 
-Posts-table
------
-CREATE TABLE Posts
+create index Users_UserURL_index
+  on Users (UserURL)
+;
+
+
+create table Posts
 (
-    PostID INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
-    Title VARCHAR(255) NOT NULL,
-    Content TEXT NOT NULL,
-    PostURL VARCHAR(10) NOT NULL,
-    CreatorID INT(11) NOT NULL,
-    CreatedOn TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    CONSTRAINT Posts_Users_UserID_fk FOREIGN KEY (CreatorID) REFERENCES Users (UserID) ON DELETE CASCADE ON UPDATE CASCADE
-);
-CREATE INDEX Posts_PostURL_index ON Posts (PostURL);
-CREATE INDEX Posts_Users_UserID_fk ON Posts (CreatorID)
+  Title varchar(255) not null,
+  Content text not null,
+  PostURL varchar(10) not null
+    primary key,
+  CreatorURL varchar(10) not null,
+  CreatedOn timestamp default CURRENT_TIMESTAMP not null,
+  constraint Posts_Users_UserURL_fk
+  foreign key (CreatorURL) references Users (UserURL)
+    on update cascade on delete cascade
+)
+;
+
+create index Posts_PostURL_index
+  on Posts (PostURL)
+;
+
+create index Posts_Users_UserURL_fk
+  on Posts (CreatorURL)
+;
+
+
+
+
+
+

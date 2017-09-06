@@ -58,5 +58,4 @@ function regformhash(form, uid, password, conf) {
 
     // Finally submit the form.
     form.submit();
-    return true;
 }

@@ -14,7 +14,7 @@ type Page struct {
 	Body  []byte
 	Timestamp string
 	PostURL string
-	Creator string
+	CreatorURL string
 }
 type User struct {
 	Username string
@@ -23,19 +23,20 @@ type User struct {
 	Passhash []byte
 
 }
-func CheckLogin(db *sql.DB, input *User) error {
+func CheckLogin(db *sql.DB, input *User) (string, error) {
 	var savedhash []byte
-	err := db.QueryRow("SELECT Users.Password FROM Users WHERE Users.Email = ?", input.Email).Scan(&savedhash)
+	var userurl string
+	err := db.QueryRow("SELECT Users.Password, Users.UserURL FROM Users WHERE Users.Email = ?", input.Email).Scan(&savedhash, &userurl)
 	if err != nil {
 		fmt.Printf("%s", err)
-		return err
+		return "", err
 	}
 	err = bcrypt.CompareHashAndPassword(savedhash, []byte(input.Passhash))
 	if err != nil {
 		fmt.Printf("%s", err)
-		return err
+		return "", err
 	}
-	return nil
+	return userurl, nil
 }
 
 func UserSignup(db *sql.DB, input *User) (int64, error) {
@@ -81,7 +82,7 @@ func SingleApp(id string, db *sql.DB) (*Page, error) {
 		`SELECT Posts.Title, Posts.Content, Posts.CreatedOn, Posts.PostURL, Users.Username
 			  FROM Posts
 			  INNER JOIN Users ON Posts.CreatorID = Users.UserID
-			  WHERE Posts.PostURL = ?`, id).Scan(&p.Title, &p.Body, &p.Timestamp, &p.PostURL, &p.Creator)
+			  WHERE Posts.PostURL = ?`, id).Scan(&p.Title, &p.Body, &p.Timestamp, &p.PostURL, &p.CreatorURL)
 	if err != nil {
 		return nil, err
 	}
@@ -91,16 +92,13 @@ func AllApps(db *sql.DB) ([]*Page, error) {
 	rows, err := db.Query(
 		`SELECT Posts.Title, Posts.Content, Posts.CreatedOn, Posts.PostURL, Users.Username
 			  FROM Posts
-			  INNER JOIN Users ON Posts.CreatorID = Users.UserID`)
-	if err != nil {
-		return nil, err
-	}
+			  INNER JOIN Users ON Posts.CreatorURL`)
 	defer rows.Close()
 
 	bks := make([]*Page, 0)
 	for rows.Next() {
 		bk := new(Page)
-		err := rows.Scan(&bk.Title, &bk.Body, &bk.Timestamp, &bk.PostURL, &bk.Creator)
+		err := rows.Scan(&bk.Title, &bk.Body, &bk.Timestamp, &bk.PostURL, &bk.CreatorURL)
 		if err != nil {
 			return nil, err
 		}
@@ -113,12 +111,12 @@ func AllApps(db *sql.DB) ([]*Page, error) {
 }
 func NewApp(db *sql.DB, input *Page) (int64, error) {
 	prep, err := db.Prepare(
-		`INSERT INTO Applications (AppName, Description, AppURL)
-			  VALUES (?, ?, ?)`)
+		`INSERT INTO Posts (Title, Content, PostURL, CreatorURL)
+			  VALUES (?, ?, ?, ?)`)
 	if err != nil {
 		err.Error()
 	}
-	updt, err := prep.Exec(input.Title, input.Body, input.PostURL)
+	updt, err := prep.Exec(input.Title, input.Body, input.PostURL, input.CreatorURL)
 	if err != nil {
 		err.Error()
 	}

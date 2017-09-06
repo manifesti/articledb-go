@@ -47,7 +47,7 @@ func main() {
 
 	// open http server
 	http.HandleFunc("/signup/", env.signupRoute)
-	http.HandleFunc("/view/", env.viewApp)
+	http.HandleFunc("/view/", env.viewPage)
 	http.HandleFunc("/new/", env.createApp)
 	http.HandleFunc("/login/", env.loginRoute)
 	http.ListenAndServe(":8080", context.ClearHandler(http.DefaultServeMux))
@@ -85,7 +85,8 @@ func (env *App) loginRoute(w http.ResponseWriter, req *http.Request) {
 		info := new(dbmodels.User)
 		info.Email = req.FormValue("email")
 		info.Passhash = []byte(req.FormValue("p"))
-		err := dbmodels.CheckLogin(env.db, info)
+		fmt.Printf("%s %s", info.Email, info.Passhash)
+		userurl, err := dbmodels.CheckLogin(env.db, info)
 		if err != nil {
 			fmt.Printf("oops i did it again in login")
 			http.Redirect(w, req, "/login/", http.StatusFound)
@@ -93,13 +94,14 @@ func (env *App) loginRoute(w http.ResponseWriter, req *http.Request) {
 		}
 		session, _ := env.sesStorage.Get(req, "golangcookie")
 		session.Values["loggedin"] = true
+		session.Values["userurl"] = userurl
 		session.Save(req, w)
 		http.Redirect(w, req, "/view/", http.StatusFound)
 		return
 	}
 }
 
-func (env *App) viewApp(w http.ResponseWriter, req *http.Request) {
+func (env *App) viewPage (w http.ResponseWriter, req *http.Request) {
 	if req.Method != "GET" {
 		http.Error(w, http.StatusText(405), 405)
 		return
@@ -122,14 +124,15 @@ func (env *App) viewApp(w http.ResponseWriter, req *http.Request) {
 		bk, err := dbmodels.SingleApp(title, env.db)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
+			return
 		}
 	renderApplication(w, "view", bk, env.templates)
 	return
 }
 
 func (env *App) createApp(w http.ResponseWriter, req *http.Request) {
-	check, _ := env.sesStorage.Get(req, "golangcookie")
-	if check.Values["loggedin"] != true {
+	session, _ := env.sesStorage.Get(req, "golangcookie")
+	if session.Values["loggedin"] != true {
 		http.Redirect(w, req, "/login/", http.StatusFound)
 		return
 	}
@@ -138,16 +141,20 @@ func (env *App) createApp(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	if req.Method == "POST" {
+
+
 		p := new(dbmodels.Page)
 		p.Title = req.FormValue("appname")
 		p.Body = []byte(req.FormValue("body"))
 		p.PostURL = uid.New(10)
-		last, err := dbmodels.NewApp(env.db, p)
+		p.CreatorURL = string(session.Values["userurl"])
+		_, err := dbmodels.NewApp(env.db, p)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
+			return
 		}
 
-		fmt.Printf("article %s added into database as id %d", p.Title, last)
+		fmt.Printf("article %s added into database as id %d", p.Title, p.PostURL)
 		http.Redirect(w, req, "/view/"+p.PostURL, http.StatusFound)
 		return
 	}
