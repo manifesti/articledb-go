@@ -4,16 +4,16 @@
     <title>Application database</title>
     <!-- Bootstrap from CDN -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 </head>
 <div class="container">
 <h1>Golang Application database  <a href="/new/" class="btn btn-primary" role="">Add new</a></h1>
-    {{range .}}
-    <div class="row">
-        <div class="col-md-8"><a href="/view/{{.AppURL}}">{{.Title}}</a></div>
-        <div class="col-md-4">Added on: {{.Timestamp}}</div>
+    <div class="list-group">
+        {{range .}}
+        <div class="col-md-7"><a href="/view/{{.PostURL}}" class="list-group-item">{{.Title}}</a></div>
+        <div class="col-md-2"><a href="/user/{{.CreatorURL}}" class="list-group-item">{{.Creator}}</a></div>
+        <div class="col-md-3"><p class="list-group-item">{{.Timestamp}}</p></div>
+        {{end}}
     </div>
-    {{end}}
 </div>
 </html>

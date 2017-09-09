@@ -14,6 +14,7 @@ type Page struct {
 	Body  []byte
 	Timestamp string
 	PostURL string
+	Creator string
 	CreatorURL string
 }
 type User struct {
@@ -79,10 +80,10 @@ func UserSignup(db *sql.DB, input *User) (int64, error) {
 func SingleApp(id string, db *sql.DB) (*Page, error) {
 	p := new(Page)
 	err := db.QueryRow(
-		`SELECT Posts.Title, Posts.Content, Posts.CreatedOn, Posts.PostURL, Users.Username
+		`SELECT Posts.Title, Posts.Content, Posts.CreatedOn, Posts.PostURL, Posts.CreatorURL, Users.Username
 			  FROM Posts
-			  INNER JOIN Users ON Posts.CreatorID = Users.UserID
-			  WHERE Posts.PostURL = ?`, id).Scan(&p.Title, &p.Body, &p.Timestamp, &p.PostURL, &p.CreatorURL)
+			  INNER JOIN Users ON Posts.CreatorURL = Users.UserURL
+			  WHERE Posts.PostURL = ?`, id).Scan(&p.Title, &p.Body, &p.Timestamp, &p.PostURL, &p.CreatorURL, &p.Creator)
 	if err != nil {
 		return nil, err
 	}
@@ -90,15 +91,15 @@ func SingleApp(id string, db *sql.DB) (*Page, error) {
 }
 func AllApps(db *sql.DB) ([]*Page, error) {
 	rows, err := db.Query(
-		`SELECT Posts.Title, Posts.Content, Posts.CreatedOn, Posts.PostURL, Users.Username
+		`SELECT Posts.Title, Posts.Content, Posts.CreatedOn, Posts.PostURL, Posts.CreatorURL, Users.Username
 			  FROM Posts
-			  INNER JOIN Users ON Posts.CreatorURL`)
+			  INNER JOIN Users ON Posts.CreatorURL = Users.UserURL`)
 	defer rows.Close()
 
 	bks := make([]*Page, 0)
 	for rows.Next() {
 		bk := new(Page)
-		err := rows.Scan(&bk.Title, &bk.Body, &bk.Timestamp, &bk.PostURL, &bk.CreatorURL)
+		err := rows.Scan(&bk.Title, &bk.Body, &bk.Timestamp, &bk.PostURL, &bk.CreatorURL, &bk.Creator)
 		if err != nil {
 			return nil, err
 		}

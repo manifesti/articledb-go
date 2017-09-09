@@ -46,6 +46,7 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	// open http server
+	http.HandleFunc("/logout/", env.logoutRoute)
 	http.HandleFunc("/signup/", env.signupRoute)
 	http.HandleFunc("/view/", env.viewPage)
 	http.HandleFunc("/new/", env.createApp)
@@ -100,6 +101,18 @@ func (env *App) loginRoute(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 }
+func (env *App) logoutRoute(w http.ResponseWriter, req *http.Request) {
+	if req.Method != "POST" {
+		http.Error(w, "405 method not allowed", 405)
+		return
+	} else {
+		session, _ := env.sesStorage.Get(req, "golangcookie")
+		session.Values["loggedin"] = false
+		session.Values["userurl"] = ""
+		http.Redirect(w, req, "/view/", http.StatusFound)
+		return
+	}
+}
 
 func (env *App) viewPage (w http.ResponseWriter, req *http.Request) {
 	if req.Method != "GET" {
@@ -141,13 +154,20 @@ func (env *App) createApp(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	if req.Method == "POST" {
-
+		cookiedata := session.Values["userurl"]
+		var cookiestring string
+		cookiestring, ok := cookiedata.(string)
+		if !ok {
+			http.Error(w, "ongelma keksin kanssa", 500)
+			fmt.Printf("ongelma keksin kanssa")
+			return
+		}
 
 		p := new(dbmodels.Page)
 		p.Title = req.FormValue("appname")
 		p.Body = []byte(req.FormValue("body"))
 		p.PostURL = uid.New(10)
-		p.CreatorURL = string(session.Values["userurl"])
+		p.CreatorURL = cookiestring
 		_, err := dbmodels.NewApp(env.db, p)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
