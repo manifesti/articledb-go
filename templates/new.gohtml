@@ -1,20 +1,20 @@
 {{define "new"}}
 {{template "head"}}
-    <script src="/static/js/sha512.js"></script>
-    <script src="/static/js/login.js"></script>
 </head>
 <body>
+  {{template "headmenu"}}
 <div class="container">
     <div class="col-md-8 col-md-offset-2">
-{{template "headmenu"}}
             <form action="/new/" method="POST">
                 <div class="form-group">
-                <label for="appname">Title</label><br>
-                <input type="text" class="form-control" id="appname" value=""><br>
-                <label for="body">Content</label><br>
-                <textarea id="body" class="form-control" rows="25" cols="50"></textarea><br>
-                <input type="submit" class="btn btn-info" value="Publish">
+                  <label for="appname">Title</label>
+                  <input type="text" class="form-control" id="appname" name="appname" value="">
                 </div>
+                <div class="form-group">
+                  <label for="body">Content</label>
+                  <textarea id="body" name="body" class="form-control" rows="25" cols="50"></textarea>
+                </div>
+                <input type="submit" class="btn btn-info" value="Publish">
             </form>
     </div>
 
