@@ -1,0 +1,18 @@
+{{define "view"}}
+{{template "head"}}
+</head>
+<body>
+  {{template "headmenu"}}
+<div class="container">
+<h1>{{.Pagedata.Title}}</h1>
+
+<p>{{printf "%s" .Pagedata.Body}}</p>
+
+<p> Written by [<a href="/user/{{.Pagedata.CreatorURL}}">{{.Pagedata.Creator}}</a>]</p>
+
+<p>{{printf "%s" .Pagedata.Timestamp}}</p>
+
+</div>
+</body>
+</html>
+{{end}}

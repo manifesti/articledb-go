@@ -6,21 +6,31 @@ import (
 	// "strconv"
 	// "time"
 	// "fmt"
-	"html/template"
-	"net/http"
 	"database/sql"
-	_"github.com/go-sql-driver/mysql"
+	"fmt"
+	"html/template"
 	"log"
-	"github.com/gorilla/sessions"
+	"net/http"
+
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/context"
 	"github.com/gorilla/securecookie"
+	"github.com/gorilla/sessions"
 	"github.com/zemirco/uid"
-	"fmt")
+)
 
 type App struct {
-	db *sql.DB
-	templates *template.Template
+	db         *sql.DB
+	templates  *template.Template
 	sesStorage *sessions.CookieStore
+}
+type listData struct {
+	Loginstatus bool
+	Pagesdata   []*dbmodels.Page
+}
+type singleData struct {
+	Loginstatus bool
+	Pagedata    *dbmodels.Page
 }
 
 func main() {
@@ -34,8 +44,9 @@ func main() {
 		log.Panic(err)
 	}
 	// cache templates
-	templates := template.Must(template.ParseFiles("templates/new.html", "templates/view.html",
-		"templates/login.html", "templates/signup.html", "templates/home.html"))
+	templates := template.Must(template.ParseFiles("templates/new.gohtml", "templates/view.gohtml",
+		"templates/login.gohtml", "templates/signup.gohtml", "templates/home.gohtml", "templates/header.gohtml",
+		"templates/headmenu.gohtml"))
 	// session storage
 	sesStorage := sessions.NewCookieStore([]byte(securecookie.GenerateRandomKey(32)))
 	// init app struct
@@ -105,28 +116,34 @@ func (env *App) logoutRoute(w http.ResponseWriter, req *http.Request) {
 	if req.Method != "POST" {
 		http.Error(w, "405 method not allowed", 405)
 		return
-	} else {
-		session, _ := env.sesStorage.Get(req, "golangcookie")
-		session.Values["loggedin"] = false
-		session.Values["userurl"] = ""
-		http.Redirect(w, req, "/view/", http.StatusFound)
-		return
 	}
+	session, _ := env.sesStorage.Get(req, "golangcookie")
+	session.Values["loggedin"] = false
+	session.Values["userurl"] = ""
+	http.Redirect(w, req, "/view/", http.StatusFound)
 }
 
-func (env *App) viewPage (w http.ResponseWriter, req *http.Request) {
+func (env *App) viewPage(w http.ResponseWriter, req *http.Request) {
 	if req.Method != "GET" {
 		http.Error(w, http.StatusText(405), 405)
 		return
 	}
 	title := req.URL.Path[len("/view/"):]
 	if len(title) == 0 {
+		totmpl := new(listData)
+		session, _ := env.sesStorage.Get(req, "golangcookie")
+		if session.Values["loggedin"] != true {
+			totmpl.Loginstatus = false
+		} else {
+			totmpl.Loginstatus = true
+		}
 		bks, err := dbmodels.AllApps(env.db)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
 		}
-		renderList(w, "home", bks, env.templates)
+		totmpl.Pagesdata = bks
+		renderList(w, "home", totmpl, env.templates)
 		return
 	}
 	if len(title) != 10 {
@@ -134,12 +151,21 @@ func (env *App) viewPage (w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err, 404)
 		return
 	}
-		bk, err := dbmodels.SingleApp(title, env.db)
-		if err != nil {
-			http.Error(w, err.Error(), 500)
-			return
-		}
-	renderApplication(w, "view", bk, env.templates)
+
+	bk, err := dbmodels.SingleApp(title, env.db)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	totmpl := new(singleData)
+	totmpl.Pagedata = bk
+	session, _ := env.sesStorage.Get(req, "golangcookie")
+	if session.Values["loggedin"] != true {
+		totmpl.Loginstatus = false
+	} else {
+		totmpl.Loginstatus = true
+	}
+	renderApplication(w, "view", totmpl, env.templates)
 	return
 }
 
@@ -150,7 +176,9 @@ func (env *App) createApp(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	if req.Method == "GET" {
-		renderApplication(w, "new", new(dbmodels.Page), env.templates)
+		input := new(singleData)
+		input.Loginstatus = true
+		renderApplication(w, "new", input, env.templates)
 		return
 	}
 	if req.Method == "POST" {
@@ -174,26 +202,25 @@ func (env *App) createApp(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		fmt.Printf("article %s added into database as id %d", p.Title, p.PostURL)
+		fmt.Printf("article %s added into database as id %s", p.Title, p.PostURL)
 		http.Redirect(w, req, "/view/"+p.PostURL, http.StatusFound)
 		return
 	}
 }
-func renderApplication(w http.ResponseWriter, tmpl string, p *dbmodels.Page, templates *template.Template) {
-
-	err := templates.ExecuteTemplate(w, tmpl +".html", p)
+func renderApplication(w http.ResponseWriter, tmpl string, p *singleData, templates *template.Template) {
+	err := templates.ExecuteTemplate(w, tmpl, p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
-func renderList(w http.ResponseWriter, tmpl string, p []*dbmodels.Page, templates *template.Template) {
-	err := templates.ExecuteTemplate(w, tmpl +".html", p)
+func renderList(w http.ResponseWriter, tmpl string, p *listData, templates *template.Template) {
+	err := templates.ExecuteTemplate(w, tmpl, p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 func renderStatic(w http.ResponseWriter, templates *template.Template, choice string) {
-	err := templates.ExecuteTemplate(w, choice + ".html", nil)
+	err := templates.ExecuteTemplate(w, choice, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

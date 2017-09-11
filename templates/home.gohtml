@@ -1,0 +1,32 @@
+{{define "home"}}
+{{template "head"}}
+</head>
+<body>
+{{template "headmenu"}}
+<div class="container">
+    <div class="col-md-8 col-md-offset-2">
+        <div class="table-responsive">
+    <table class="table table-stripped">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>User</th>
+                <th>Added on</th>
+            </tr>
+        </thead>
+        <tbody>
+        {{range .Pagesdata}}
+        <tr>
+        <td><a href="/view/{{.PostURL}}" >{{.Title}}</a></td>
+        <td><a href="/user/{{.CreatorURL}}" >{{.Creator}}</a></td>
+        <td><p>{{.Timestamp}}</p></td>
+        </tr>
+        {{end}}
+        </tbody>
+    </table>
+        </div>
+    </div>
+    </div>
+</body>
+</html>
+{{end}}
