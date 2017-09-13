@@ -118,8 +118,8 @@ func (env *App) logoutRoute(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	session, _ := env.sesStorage.Get(req, "golangcookie")
-	session.Values["loggedin"] = false
-	session.Values["userurl"] = ""
+	session.Options.MaxAge = -1
+	session.Save(req, w)
 	http.Redirect(w, req, "/view/", http.StatusFound)
 }
 
