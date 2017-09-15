@@ -2,6 +2,7 @@ package dbmodels
 
 import (
 	"database/sql"
+
 	"golang.org/x/crypto/bcrypt"
 	// "github.com/zemirco/uid"
 	// "time"
@@ -10,20 +11,20 @@ import (
 )
 
 type Page struct {
-	Title string
-	Body  []byte
-	Timestamp string
-	PostURL string
-	Creator string
+	Title      string
+	Body       []byte
+	Timestamp  string
+	PostURL    string
+	Creator    string
 	CreatorURL string
 }
 type User struct {
 	Username string
-	Email string
-	UserURL string
-	Passhash []byte
-
+	Email    string
+	UserURL  string
+	Userpass string
 }
+
 func CheckLogin(db *sql.DB, input *User) (string, error) {
 	var savedhash []byte
 	var userurl string
@@ -32,7 +33,7 @@ func CheckLogin(db *sql.DB, input *User) (string, error) {
 		fmt.Printf("%s", err)
 		return "", err
 	}
-	err = bcrypt.CompareHashAndPassword(savedhash, []byte(input.Passhash))
+	err = bcrypt.CompareHashAndPassword(savedhash, []byte(input.Userpass))
 	if err != nil {
 		fmt.Printf("%s", err)
 		return "", err
@@ -48,29 +49,29 @@ func UserSignup(db *sql.DB, input *User) (int64, error) {
 							  OR Users.Email = ?)`, input.Username, input.Email).Scan(&boolint)
 	if err != nil {
 		fmt.Printf("%s", err)
-		return -1, err
+		return 0, errors.New("Error checking database")
 	}
 	if boolint == 1 {
-		return -1, errors.New("account already exists")
+		return 0, errors.New("account already exists")
 	} else {
 		prep, err := db.Prepare(
 			`INSERT INTO Users (Users.Email, Users.Username, Users.UserURL, Users.Password)
 				  VALUES (?, ?, ?, ?)`)
 		if err != nil {
 			fmt.Printf("%s", err)
-			return -1, err
+			return 0, errors.New("failed db prep")
 		}
-		passhash, err := bcrypt.GenerateFromPassword([]byte(input.Passhash), bcrypt.DefaultCost)
+		passhash, err := bcrypt.GenerateFromPassword([]byte(input.Userpass), bcrypt.DefaultCost)
 		if err != nil {
 
 			fmt.Printf("%s", err)
-			return -1, err
+			return 0, errors.New("cant generate pwhash")
 		}
 
 		updt, err := prep.Exec(input.Email, input.Username, input.UserURL, passhash)
 		if err != nil {
 			fmt.Printf("%s", err)
-			return -1, err
+			return 0, errors.New("failed to insert user")
 		}
 		id, _ := updt.LastInsertId()
 		return id, nil
@@ -94,12 +95,15 @@ func AllApps(db *sql.DB) ([]*Page, error) {
 		`SELECT Posts.Title, Posts.Content, Posts.CreatedOn, Posts.PostURL, Posts.CreatorURL, Users.Username
 			  FROM Posts
 			  INNER JOIN Users ON Posts.CreatorURL = Users.UserURL`)
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 
 	bks := make([]*Page, 0)
 	for rows.Next() {
 		bk := new(Page)
-		err := rows.Scan(&bk.Title, &bk.Body, &bk.Timestamp, &bk.PostURL, &bk.CreatorURL, &bk.Creator)
+		err = rows.Scan(&bk.Title, &bk.Body, &bk.Timestamp, &bk.PostURL, &bk.CreatorURL, &bk.Creator)
 		if err != nil {
 			return nil, err
 		}
@@ -115,11 +119,11 @@ func NewApp(db *sql.DB, input *Page) (int64, error) {
 		`INSERT INTO Posts (Title, Content, PostURL, CreatorURL)
 			  VALUES (?, ?, ?, ?)`)
 	if err != nil {
-		err.Error()
+		return 0, err
 	}
 	updt, err := prep.Exec(input.Title, input.Body, input.PostURL, input.CreatorURL)
 	if err != nil {
-		err.Error()
+		return 0, err
 	}
 	insert, err := updt.LastInsertId()
 	return insert, err

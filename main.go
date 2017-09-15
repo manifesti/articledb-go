@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"regexp"
 	"structapp/dbmodels"
 	// "strconv"
 	// "time"
@@ -33,6 +34,9 @@ type singleData struct {
 	Pagedata    *dbmodels.Page
 }
 
+// global regex for email validation
+var emailRegexp = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+
 func main() {
 	// open db connection
 	if len(os.Args) < 3 {
@@ -51,7 +55,6 @@ func main() {
 	sesStorage := sessions.NewCookieStore([]byte(securecookie.GenerateRandomKey(32)))
 	// init app struct
 	env := &App{db: db, templates: templates, sesStorage: sesStorage}
-
 	// static files
 	fs := http.FileServer(http.Dir("static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
@@ -72,18 +75,32 @@ func (env *App) signupRoute(w http.ResponseWriter, req *http.Request) {
 	}
 	if req.Method == "POST" {
 		info := new(dbmodels.User)
+		_ = req.ParseForm()
 		info.Username = req.FormValue("username")
 		info.Email = req.FormValue("email")
-		info.Passhash = []byte(req.FormValue("p"))
-		info.UserURL = uid.New(10)
-		out, err := dbmodels.UserSignup(env.db, info)
-		if err != nil {
-			fmt.Printf("oops i did it again in signup")
-			http.Redirect(w, req, "/signup/", http.StatusFound)
+		info.Userpass = req.FormValue("password")
+		passcheck := req.FormValue("conf")
+		if info.Userpass != passcheck {
+			w.Write([]byte("1"))
 			return
 		}
-		fmt.Printf("user %s added into database as id %d", info.Email, out)
-		http.Redirect(w, req, "/view/", http.StatusFound)
+		if len(info.Username) > 32 {
+			w.Write([]byte("2"))
+			return
+		}
+		if len(info.Email) > 255 || !emailRegexp.MatchString(info.Email) {
+			w.Write([]byte("3"))
+			return
+		}
+		info.UserURL = uid.New(10)
+		_, err := dbmodels.UserSignup(env.db, info)
+		if err != nil {
+			fmt.Printf("oops i did it again in signup")
+			w.Write([]byte("4"))
+			return
+		}
+		fmt.Printf("user %s added into database as id %s", info.Email, info.UserURL)
+		w.Write([]byte("5"))
 		return
 	}
 }
@@ -94,21 +111,27 @@ func (env *App) loginRoute(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	if req.Method == "POST" {
-		info := new(dbmodels.User)
-		info.Email = req.FormValue("email")
-		info.Passhash = []byte(req.FormValue("p"))
-		fmt.Printf("%s %s", info.Email, info.Passhash)
-		userurl, err := dbmodels.CheckLogin(env.db, info)
+		err := req.ParseForm()
 		if err != nil {
 			fmt.Printf("oops i did it again in login")
 			http.Redirect(w, req, "/login/", http.StatusFound)
+			return
+		}
+		info := new(dbmodels.User)
+		info.Email = req.FormValue("email")
+		info.Userpass = req.FormValue("password")
+		fmt.Printf("%s %s", info.Email, info.Userpass)
+		userurl, err := dbmodels.CheckLogin(env.db, info)
+		if err != nil {
+			w.Write([]byte("1"))
 			return
 		}
 		session, _ := env.sesStorage.Get(req, "golangcookie")
 		session.Values["loggedin"] = true
 		session.Values["userurl"] = userurl
 		session.Save(req, w)
-		http.Redirect(w, req, "/view/", http.StatusFound)
+		w.Write([]byte("2"))
+		// http.Redirect(w, req, "/view/", http.StatusFound)
 		return
 	}
 }

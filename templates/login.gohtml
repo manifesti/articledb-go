@@ -1,27 +1,28 @@
 {{define "login"}}
 {{template "head"}}
-    <script src="/static/js/sha512.js"></script>
-    <script src="/static/js/login.js"></script>
+  <script type="text/javascript" src="/static/js/loginjquery.js"></script>
 </head>
 {{template "headmenu" .}}
 <div class="container">
     <div class="row">
-        <div class="col-xs-2 col-md-4"></div>
-        <div class="col-xs-8 col-md-4">
-        <form class="form-signin" method="post" action="">
+        <div class="col-xs-2 col-md-3"></div>
+        <div class="col-xs-8 col-md-6">
+        <form id="loginForm" class="form-signin" method="post">
             <h2 class="form-signin-heading">Log in</h2>
+              <div id="loginmessage"></div>
             <label for="email" class="sr-only">Email address</label>
-            <input type="email" name="email" id="email" class="form-control" placeholder="Email address" required autofocus style="margin-bottom: 10px;">
+            <input type="email" name="email" id="email" class="form-control" placeholder="Email address" required autofocus style="margin-bottom: 10px;" required>
             <label for="password" class="sr-only">Password</label>
-            <input type="password" name="password" id="password" class="form-control" placeholder="Password" required style="margin-bottom: 10px;">
+            <input type="password" name="password" id="password" class="form-control" placeholder="Password" required style="margin-bottom: 10px;" required>
             <div class="row">
-                <div class="col-md-6"><button class="btn btn-lg btn-primary btn-block" onclick="formhash();" style="margin-bottom: 10px;">Sign in</button></div>
-                <a href="/signup/"><div class="col-md-6"><button class="btn btn-lg btn-success btn-block">Create account</button></div></a>
+                <div class="col-md-6 col-sm-6"><button class="btn-lg btn-primary btn-block" id="loginSubmit" type="submit" value="Sign in" style="margin-bottom: 10px;">Sign in</button></div>
+            </form>
+                <div class="col-md-6 col-sm-6"><a href="/signup/"><button class="btn-lg btn-success btn-block">Create account</button></a></div>
             </div>
-        </form>
+
             <p>Forgot your password? Too bad.</p>
         </div>
-        <div class="col-xs-2 col-md-4"></div>
+        <div class="col-xs-2 col-md-3"></div>
     </div>
 </div>
 </html>

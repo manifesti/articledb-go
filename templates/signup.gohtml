@@ -1,7 +1,6 @@
 {{define "signup"}}
 {{template "head"}}
-    <script src="/static/js/sha512.js"></script>
-    <script src="/static/js/signup.js"></script>
+  <script type="text/javascript" src="/static/js/signupjquery.js"></script>
 </head>
 {{template "headmenu" .}}
 <div class="container">
@@ -9,29 +8,30 @@
         <div class="container-page">
             <div class="col-md-3"></div>
             <div class="col-md-6">
-                <h3 class="dark-grey">Registration</h3>
-                <form action="" method="post">
+                <h2 class="dark-grey">Registration</h2>
+                <div id="signupmessage"></div>
+                <form action="" method="post" id="signupForm">
                 <div class="form-group col-lg-12">
                     <label>Nickname</label>
-                    <input type="" id="username" name="username" class="form-control" value="">
+                    <input type="" id="username" name="username" class="form-control" value="" required>
                 </div>
 
                 <div class="form-group col-lg-12">
                     <label>Email</label>
-                    <input type="email" id="email" name="email" class="form-control" value="">
+                    <input type="email" id="email" name="email" class="form-control" value="" required>
                 </div>
 
                 <div class="form-group col-lg-6">
                     <label>Password</label>
-                    <input type="password" id="password" name="password" class="form-control" value="">
+                    <input type="password" id="password" name="password" class="form-control" value="" required>
                 </div>
 
                 <div class="form-group col-lg-6">
                     <label>Repeat password</label>
-                    <input type="password" id="conf" name="conf" class="form-control" value="">
+                    <input type="password" id="conf" name="conf" class="form-control" value="" required>
                 </div>
                 <div class="form-group col-lg-12" style="text-align:center">
-                    <button onclick="regformhash();" class="btn btn-primary">Register</button>
+                    <button class="btn-lg btn-primary btn-block" id="signupSubmit" type="submit" value="Sign in">Sign in</button>
                 </div>
                 </form>
 
