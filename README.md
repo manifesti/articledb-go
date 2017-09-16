@@ -1,10 +1,14 @@
-TODO:
+# structapp
 
-HTTPS
-Proper login/signup error to user (almost there)
-Template functions for showing logged in users a logout-button etc. (done)
+Simple web-page showing articles written by users.
 
+Bootstrap and JQuery come from their respective official CDNs.
 
+## Installing
+
+### MySQL
+
+```mysql
 create table Users
 (
   Email varchar(255) not null,
@@ -42,9 +46,4 @@ create index Posts_PostURL_index
 create index Posts_Users_UserURL_fk
   on Posts (CreatorURL)
 ;
-
-
-
-
-
-
+```

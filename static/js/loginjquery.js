@@ -7,5 +7,5 @@ $(document).ready(function() {
       } else if (result == "2") {
         $("#loginmessage").empty().html("<div class=\"alert alert-success\">Successful login!</div>").delay(1000).window.location.replace("/view/");
       }}, "json");
+    });
   });
-});
