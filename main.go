@@ -95,11 +95,11 @@ func (env *App) signupRoute(w http.ResponseWriter, req *http.Request) {
 		info.UserURL = uid.New(10)
 		_, err := dbmodels.UserSignup(env.db, info)
 		if err != nil {
-			fmt.Printf("oops i did it again in signup")
+			fmt.Printf("oops i did it again in signup\n")
 			w.Write([]byte("4"))
 			return
 		}
-		fmt.Printf("user %s added into database as id %s", info.Email, info.UserURL)
+		fmt.Printf("user %s added into database as id %s\n", info.Email, info.UserURL)
 		w.Write([]byte("5"))
 		return
 	}
@@ -113,14 +113,14 @@ func (env *App) loginRoute(w http.ResponseWriter, req *http.Request) {
 	if req.Method == "POST" {
 		err := req.ParseForm()
 		if err != nil {
-			fmt.Printf("oops i did it again in login")
+			fmt.Printf("oops i did it again in login\n")
 			http.Redirect(w, req, "/login/", http.StatusFound)
 			return
 		}
 		info := new(dbmodels.User)
 		info.Email = req.FormValue("email")
 		info.Userpass = req.FormValue("password")
-		fmt.Printf("%s %s", info.Email, info.Userpass)
+		fmt.Printf("%s logged in\n", info.Email)
 		userurl, err := dbmodels.CheckLogin(env.db, info)
 		if err != nil {
 			w.Write([]byte("1"))
@@ -210,7 +210,7 @@ func (env *App) createApp(w http.ResponseWriter, req *http.Request) {
 		cookiestring, ok := cookiedata.(string)
 		if !ok {
 			http.Error(w, "ongelma keksin kanssa", 500)
-			fmt.Printf("ongelma keksin kanssa")
+			fmt.Printf("ongelma keksin kanssa\n")
 			return
 		}
 
@@ -225,7 +225,7 @@ func (env *App) createApp(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		fmt.Printf("article %s added into database as id %s", p.Title, p.PostURL)
+		fmt.Printf("article %s added into database as id %s\n", p.Title, p.PostURL)
 		http.Redirect(w, req, "/view/"+p.PostURL, http.StatusFound)
 		return
 	}
