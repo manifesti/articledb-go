@@ -1,6 +1,7 @@
 package main
 
 import (
+	"articledb-go/dbmodels"
 	"database/sql"
 	"fmt"
 	"html/template"
@@ -8,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"regexp"
-	"structapp/dbmodels"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
