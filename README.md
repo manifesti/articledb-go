@@ -1,12 +1,6 @@
-<<<<<<< HEAD
 # ArticleDB
 
 Simple web-page that shows articles written by users.
-=======
-# structapp
-
-Simple web-page showing articles written by users.
->>>>>>> 7476a9d9ff3421d25f312449c6fb706706b69ce8
 
 Bootstrap and JQuery come from their respective official CDNs.
 
