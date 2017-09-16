@@ -5,7 +5,8 @@ $(document).ready(function() {
       if (result == "1") {
         $("#headerloginmessage").empty().html("<div class=\"alert alert-warning\">We couldn't recognize your credentials, please try again.</div>");
       } else if (result == "2") {
-        $("#headerloginmessage").empty().html("<div class=\"alert alert-success\">Successful login!</div>").delay(1000).window.location.replace("/view/");
+        $("#headerloginmessage").empty().html("<div class=\"alert alert-success\">Successful login!</div>");
+        setTimeout( function() {window.location = "/view/"} , 1000);
       }}, "json");
   });
 });

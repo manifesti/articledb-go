@@ -11,7 +11,8 @@ $(document).ready(function() {
       } else if (result == "4") {
         $("#signupmessage").empty().html("<div class=\"alert alert-warning\">Error while inserting user to database.</div>");
       } else if (result == "5") {
-        $("#signupmessage").empty().html("<div class=\"alert alert-success\">User has been added to database!</div>").delay(1000).window.location.replace("/view/");
+        $("#signupmessage").empty().html("<div class=\"alert alert-success\">User has been added to database!</div>");
+        setTimeout( function() {window.location = "/login/"} , 1000);
       }}, "json");
     });
 });
