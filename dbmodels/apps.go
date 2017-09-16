@@ -5,9 +5,9 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 	// "github.com/zemirco/uid"
-	// "time"
 	"errors"
 	"fmt"
+	"time"
 )
 
 type Page struct {
@@ -30,12 +30,12 @@ func CheckLogin(db *sql.DB, input *User) (string, error) {
 	var userurl string
 	err := db.QueryRow("SELECT Users.Password, Users.UserURL FROM Users WHERE Users.Email = ?", input.Email).Scan(&savedhash, &userurl)
 	if err != nil {
-		fmt.Printf("%s", err)
+		fmt.Printf(time.Now().String()+"%s\n", err)
 		return "", err
 	}
 	err = bcrypt.CompareHashAndPassword(savedhash, []byte(input.Userpass))
 	if err != nil {
-		fmt.Printf("%s", err)
+		fmt.Printf(time.Now().String()+"%s\n", err)
 		return "", err
 	}
 	return userurl, nil
@@ -48,7 +48,7 @@ func UserSignup(db *sql.DB, input *User) (int64, error) {
 							  WHERE Users.Username = ?
 							  OR Users.Email = ?)`, input.Username, input.Email).Scan(&boolint)
 	if err != nil {
-		fmt.Printf("%s", err)
+		fmt.Printf(time.Now().String()+"%s\n", err)
 		return 0, errors.New("Error checking database")
 	}
 	if boolint == 1 {
@@ -58,19 +58,19 @@ func UserSignup(db *sql.DB, input *User) (int64, error) {
 			`INSERT INTO Users (Users.Email, Users.Username, Users.UserURL, Users.Password)
 				  VALUES (?, ?, ?, ?)`)
 		if err != nil {
-			fmt.Printf("%s", err)
+			fmt.Printf(time.Now().String()+"%s\n", err)
 			return 0, errors.New("failed db prep")
 		}
 		passhash, err := bcrypt.GenerateFromPassword([]byte(input.Userpass), bcrypt.DefaultCost)
 		if err != nil {
 
-			fmt.Printf("%s", err)
+			fmt.Printf(time.Now().String()+"%s\n", err)
 			return 0, errors.New("cant generate pwhash")
 		}
 
 		updt, err := prep.Exec(input.Email, input.Username, input.UserURL, passhash)
 		if err != nil {
-			fmt.Printf("%s", err)
+			fmt.Printf(time.Now().String()+"%s\n", err)
 			return 0, errors.New("failed to insert user")
 		}
 		id, _ := updt.LastInsertId()

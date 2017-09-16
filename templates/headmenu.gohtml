@@ -24,7 +24,7 @@
         {{if .Loginstatus}}
         <li>
         <form class="navbar-form navbar-right" id="logout" action="/logout/" method="POST">
-           <a onclick="document.getElementById(&quot;logout&quot;).submit();">Log out</a>
+           <button type="submit" class="btn btn-link">Log out</button>
         </form>
       </li>
         {{else}}
