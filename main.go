@@ -2,6 +2,7 @@ package main
 
 import (
 	"articledb-go/dbmodels"
+	"crypto/tls"
 	"database/sql"
 	"fmt"
 	"html/template"
@@ -16,6 +17,7 @@ import (
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/zemirco/uid"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 type App struct {
@@ -38,7 +40,7 @@ var emailRegexp = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0
 func main() {
 	// open db connection
 	if len(os.Args) < 3 {
-		fmt.Printf("structapp 0.0.2\n\nstart with \"./structapp {mysql user} {mysql password} {database name}\"\n")
+		fmt.Printf("articledb-go 0.1.2\n\nstart with \"./articledb-go {mysql user} {mysql password} {database name}\"\n")
 		return
 	}
 	db, err := sql.Open("mysql", os.Args[1]+":"+os.Args[2]+"@/"+os.Args[3])
@@ -56,14 +58,29 @@ func main() {
 	// static files
 	fs := http.FileServer(http.Dir("static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
-
-	// open http server
+	// routes
 	http.HandleFunc("/logout/", env.logoutRoute)
 	http.HandleFunc("/signup/", env.signupRoute)
 	http.HandleFunc("/view/", env.viewPage)
 	http.HandleFunc("/new/", env.createApp)
 	http.HandleFunc("/login/", env.loginRoute)
-	http.ListenAndServe(":8080", context.ClearHandler(http.DefaultServeMux))
+	http.HandleFunc("/", env.homeRoute)
+	// LetsEncrypt setup
+	certManager := autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist("toreni.us"), // your domain here
+		Cache:      autocert.DirCache("certs"),          // folder for storing certificates
+	}
+	server := &http.Server{
+		Addr:      ":1443",
+		Handler:   context.ClearHandler(http.DefaultServeMux),
+		TLSConfig: &tls.Config{GetCertificate: certManager.GetCertificate},
+	}
+	// open https server
+	err = server.ListenAndServeTLS("", "")
+	if err != nil {
+		fmt.Printf("ListenAndServe: %s", err)
+	}
 }
 
 func (env *App) signupRoute(w http.ResponseWriter, req *http.Request) {
@@ -141,7 +158,29 @@ func (env *App) logoutRoute(w http.ResponseWriter, req *http.Request) {
 	session, _ := env.sesStorage.Get(req, "golangcookie")
 	session.Options.MaxAge = -1
 	session.Save(req, w)
-	http.Redirect(w, req, "/view/", http.StatusFound)
+	http.Redirect(w, req, "/", http.StatusFound)
+}
+
+func (env *App) homeRoute(w http.ResponseWriter, req *http.Request) {
+	if req.Method != "GET" {
+		http.Error(w, http.StatusText(405), 405)
+		return
+	}
+	totmpl := new(listData)
+	session, _ := env.sesStorage.Get(req, "golangcookie")
+	if session.Values["loggedin"] != true {
+		totmpl.Loginstatus = false
+	} else {
+		totmpl.Loginstatus = true
+	}
+	bks, err := dbmodels.AllApps(env.db)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	totmpl.Pagesdata = bks
+	renderList(w, "home", totmpl, env.templates)
+	return
 }
 
 func (env *App) viewPage(w http.ResponseWriter, req *http.Request) {
@@ -150,29 +189,11 @@ func (env *App) viewPage(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	title := req.URL.Path[len("/view/"):]
-	if len(title) == 0 {
-		totmpl := new(listData)
-		session, _ := env.sesStorage.Get(req, "golangcookie")
-		if session.Values["loggedin"] != true {
-			totmpl.Loginstatus = false
-		} else {
-			totmpl.Loginstatus = true
-		}
-		bks, err := dbmodels.AllApps(env.db)
-		if err != nil {
-			http.Error(w, err.Error(), 500)
-			return
-		}
-		totmpl.Pagesdata = bks
-		renderList(w, "home", totmpl, env.templates)
-		return
-	}
 	if len(title) != 10 {
 		err := "AppID on väärän pituinen."
 		http.Error(w, err, 404)
 		return
 	}
-
 	bk, err := dbmodels.SingleApp(title, env.db)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
