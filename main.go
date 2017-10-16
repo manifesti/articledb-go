@@ -2,6 +2,7 @@ package main
 
 import (
 	"articledb-go/dbmodels"
+	"bytes"
 	"crypto/tls"
 	"database/sql"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/PuerkitoBio/goquery"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/context"
 	"github.com/gorilla/securecookie"
@@ -238,11 +240,20 @@ func (env *App) createApp(w http.ResponseWriter, req *http.Request) {
 		p := new(dbmodels.Page)
 		p.Title = req.FormValue("appname")
 		unsafe := blackfriday.MarkdownBasic([]byte(req.FormValue("body")))
-		html := bluemonday.UGCPolicy().SanitizeBytes(unsafe)
-		p.Body = template.HTML(html) // []byte(req.FormValue("body"))
+		rawhtml := bluemonday.UGCPolicy().SanitizeBytes(unsafe)
+		doc, err := goquery.NewDocumentFromReader(bytes.NewReader(rawhtml))
+		if err != nil {
+			fmt.Printf("Markdown Parse Error: %s\n", err)
+			return
+		}
+		doc.Find("img").Each(func(iter int, selection *goquery.Selection) {
+			selection.AddClass("img-responsive")
+		})
+		doctodatabase, _ := doc.Html()
+		p.Body = template.HTML(doctodatabase) // []byte(req.FormValue("body"))
 		p.PostURL = uid.New(10)
 		p.CreatorURL = cookiestring
-		_, err := dbmodels.NewApp(env.db, p)
+		_, err = dbmodels.NewApp(env.db, p)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
