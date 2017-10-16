@@ -4,14 +4,15 @@
 <body>
   {{template "headmenu" .}}
 <div class="container">
-<h1>{{.Pagedata.Title}}</h1>
+  <div class="col-md-8 col-md-offset-2">
+    <h1>{{.Pagedata.Title}}</h1>
 
-<p>{{printf "%s" .Pagedata.Body}}</p>
+    {{ .Pagedata.Body }}
 
-<p> Written by [<a href="/user/{{.Pagedata.CreatorURL}}">{{.Pagedata.Creator}}</a>]</p>
+    <p> Written by [<a href="/user/{{.Pagedata.CreatorURL}}">{{.Pagedata.Creator}}</a>]</p>
 
-<p>{{printf "%s" .Pagedata.Timestamp}}</p>
-
+    <p>{{printf "%s" .Pagedata.Timestamp}}</p>
+  </div>
 </div>
 </body>
 </html>

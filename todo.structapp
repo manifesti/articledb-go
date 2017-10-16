@@ -1,6 +1,6 @@
 TODO:
 
-HTTPS
+HTTPS (done)
 Proper login/signup error to user (almost there)
 Template functions for showing logged in users a logout-button etc. (done)
 
@@ -42,9 +42,3 @@ create index Posts_PostURL_index
 create index Posts_Users_UserURL_fk
   on Posts (CreatorURL)
 ;
-
-
-
-
-
-

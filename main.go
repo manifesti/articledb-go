@@ -16,6 +16,8 @@ import (
 	"github.com/gorilla/context"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
+	"github.com/microcosm-cc/bluemonday"
+	"github.com/russross/blackfriday"
 	"github.com/zemirco/uid"
 	"golang.org/x/crypto/acme/autocert"
 )
@@ -235,7 +237,9 @@ func (env *App) createApp(w http.ResponseWriter, req *http.Request) {
 
 		p := new(dbmodels.Page)
 		p.Title = req.FormValue("appname")
-		p.Body = []byte(req.FormValue("body"))
+		unsafe := blackfriday.MarkdownBasic([]byte(req.FormValue("body")))
+		html := bluemonday.UGCPolicy().SanitizeBytes(unsafe)
+		p.Body = template.HTML(html) // []byte(req.FormValue("body"))
 		p.PostURL = uid.New(10)
 		p.CreatorURL = cookiestring
 		_, err := dbmodels.NewApp(env.db, p)

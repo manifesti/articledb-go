@@ -2,6 +2,7 @@ package dbmodels
 
 import (
 	"database/sql"
+	"html/template"
 
 	"golang.org/x/crypto/bcrypt"
 	// "github.com/zemirco/uid"
@@ -12,7 +13,7 @@ import (
 
 type Page struct {
 	Title      string
-	Body       []byte
+	Body       template.HTML
 	Timestamp  string
 	PostURL    string
 	Creator    string
@@ -80,14 +81,16 @@ func UserSignup(db *sql.DB, input *User) (int64, error) {
 
 func SingleApp(id string, db *sql.DB) (*Page, error) {
 	p := new(Page)
+	var placeholder []byte
 	err := db.QueryRow(
 		`SELECT Posts.Title, Posts.Content, Posts.CreatedOn, Posts.PostURL, Posts.CreatorURL, Users.Username
 			  FROM Posts
 			  INNER JOIN Users ON Posts.CreatorURL = Users.UserURL
-			  WHERE Posts.PostURL = ?`, id).Scan(&p.Title, &p.Body, &p.Timestamp, &p.PostURL, &p.CreatorURL, &p.Creator)
+			  WHERE Posts.PostURL = ?`, id).Scan(&p.Title, &placeholder, &p.Timestamp, &p.PostURL, &p.CreatorURL, &p.Creator)
 	if err != nil {
 		return nil, err
 	}
+	p.Body = template.HTML(placeholder)
 	return p, nil
 }
 func AllApps(db *sql.DB) ([]*Page, error) {
@@ -101,12 +104,14 @@ func AllApps(db *sql.DB) ([]*Page, error) {
 	defer rows.Close()
 
 	bks := make([]*Page, 0)
+	var placeholder []byte
 	for rows.Next() {
 		bk := new(Page)
-		err = rows.Scan(&bk.Title, &bk.Body, &bk.Timestamp, &bk.PostURL, &bk.CreatorURL, &bk.Creator)
+		err = rows.Scan(&bk.Title, &placeholder, &bk.Timestamp, &bk.PostURL, &bk.CreatorURL, &bk.Creator)
 		if err != nil {
 			return nil, err
 		}
+		bk.Body = template.HTML(placeholder)
 		bks = append(bks, bk)
 	}
 	if err = rows.Err(); err != nil {
@@ -121,7 +126,8 @@ func NewApp(db *sql.DB, input *Page) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	updt, err := prep.Exec(input.Title, input.Body, input.PostURL, input.CreatorURL)
+	articlebyte := []byte(input.Body)
+	updt, err := prep.Exec(input.Title, articlebyte, input.PostURL, input.CreatorURL)
 	if err != nil {
 		return 0, err
 	}
