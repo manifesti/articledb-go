@@ -120,6 +120,29 @@ func AllApps(db *sql.DB) ([]*Page, error) {
 	}
 	return bks, nil
 }
+func SingleUserArticles(userid string, db *sql.DB) ([]*Page, error) {
+	rows, err := db.Query(
+		`SELECT Posts.Title, Posts.CreatedOn, Posts.PostURL
+		FROM Posts
+		WHERE Posts.CreatorURL = ?`, userid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	posts := make([]*Page, 0)
+	for rows.Next() {
+		post := new(Page)
+		err = rows.Scan(&post.Title, &post.Timestamp, &post.PostURL)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return posts, nil
+}
 func AllUsers(db *sql.DB) ([]*User, error) {
 	rows, err := db.Query(
 		`SELECT Users.Username, Users.UserURL, Users.CreatedOn

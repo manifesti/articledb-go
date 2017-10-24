@@ -58,7 +58,7 @@ func main() {
 	// cache templates
 	templates := template.Must(template.ParseFiles("templates/new.gohtml", "templates/view.gohtml",
 		"templates/login.gohtml", "templates/signup.gohtml", "templates/home.gohtml", "templates/header.gohtml",
-		"templates/headmenu.gohtml", "templates/userlist.gohtml"))
+		"templates/headmenu.gohtml", "templates/userlist.gohtml", "templates/userprofile.gohtml"))
 	// session storage
 	sesStorage := sessions.NewCookieStore([]byte(securecookie.GenerateRandomKey(32)))
 	// init app struct
@@ -193,6 +193,28 @@ func (env *App) homeRoute(w http.ResponseWriter, req *http.Request) {
 }
 func (env *App) usersRoute(w http.ResponseWriter, req *http.Request) {
 	if req.Method == "GET" {
+		title := req.URL.Path[len("/view/"):]
+		if len(title) == 10 {
+			postlist, err := dbmodels.SingleUserArticles(title, db)
+			if err != nil {
+				http.Error(w, err.Error(), 500)
+				return
+			}
+			totmpl := new(listData)
+			session, _ := env.sesStorage.Get(req, "golangcookie")
+			if session.Values["loggedin"] != true {
+				totmpl.Loginstatus = false
+			} else {
+				totmpl.Loginstatus = true
+			}
+			totmpl.Pagesdata = list
+			err = env.templates.ExecuteTemplate(w, "userprofile", totmpl)
+			if err != nil {
+				http.Error(w, err.Error(), 500)
+				return
+			}
+			return
+		}
 		list, err := dbmodels.AllUsers(env.db)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
