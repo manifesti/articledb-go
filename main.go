@@ -33,6 +33,10 @@ type listData struct {
 	Loginstatus bool
 	Pagesdata   []*dbmodels.Page
 }
+type userList struct {
+	Loginstatus bool
+	Userdata    []*dbmodels.User
+}
 type singleData struct {
 	Loginstatus bool
 	Pagedata    *dbmodels.Page
@@ -54,7 +58,7 @@ func main() {
 	// cache templates
 	templates := template.Must(template.ParseFiles("templates/new.gohtml", "templates/view.gohtml",
 		"templates/login.gohtml", "templates/signup.gohtml", "templates/home.gohtml", "templates/header.gohtml",
-		"templates/headmenu.gohtml"))
+		"templates/headmenu.gohtml", "templates/userlist.gohtml"))
 	// session storage
 	sesStorage := sessions.NewCookieStore([]byte(securecookie.GenerateRandomKey(32)))
 	// init app struct
@@ -64,6 +68,7 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 	// routes
 	http.HandleFunc("/logout/", env.logoutRoute)
+	http.HandleFunc("/users/", env.usersRoute)
 	http.HandleFunc("/signup/", env.signupRoute)
 	http.HandleFunc("/view/", env.viewPage)
 	http.HandleFunc("/new/", env.createApp)
@@ -185,6 +190,30 @@ func (env *App) homeRoute(w http.ResponseWriter, req *http.Request) {
 	totmpl.Pagesdata = bks
 	renderList(w, "home", totmpl, env.templates)
 	return
+}
+func (env *App) usersRoute(w http.ResponseWriter, req *http.Request) {
+	if req.Method == "GET" {
+		list, err := dbmodels.AllUsers(env.db)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		totmpl := new(userList)
+		session, _ := env.sesStorage.Get(req, "golangcookie")
+		if session.Values["loggedin"] != true {
+			totmpl.Loginstatus = false
+		} else {
+			totmpl.Loginstatus = true
+		}
+		totmpl.Userdata = list
+		// renderList(w, "userlist", list, env.templates)
+		err = env.templates.ExecuteTemplate(w, "userlist", totmpl)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		return
+	}
 }
 
 func (env *App) viewPage(w http.ResponseWriter, req *http.Request) {

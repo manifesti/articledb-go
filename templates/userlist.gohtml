@@ -1,4 +1,4 @@
-{{define "home"}}
+{{define "userlist"}}
 {{template "head"}}
 </head>
 <body>
@@ -9,17 +9,15 @@
     <table class="table table-stripped">
         <thead>
             <tr>
-                <th>Title</th>
-                <th>User</th>
-                <th>Added on</th>
+                <th>Username</th>
+                <th>Account created</th>
             </tr>
         </thead>
         <tbody>
-        {{range .Pagesdata}}
+        {{range .Userdata}}
         <tr>
-        <td><a href="/view/{{.PostURL}}" >{{.Title}}</a></td>
-        <td><a href="/users/{{.CreatorURL}}" >{{.Creator}}</a></td>
-        <td><p>{{.Timestamp}}</p></td>
+        <td><a href="/users/{{.UserURL}}" >{{.Username}}</a></td>
+        <td><p>{{.Joindate}}</p></td>
         </tr>
         {{end}}
         </tbody>

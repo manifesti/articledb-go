@@ -24,6 +24,7 @@ type User struct {
 	Email    string
 	UserURL  string
 	Userpass string
+	Joindate string
 }
 
 func CheckLogin(db *sql.DB, input *User) (string, error) {
@@ -119,6 +120,29 @@ func AllApps(db *sql.DB) ([]*Page, error) {
 	}
 	return bks, nil
 }
+func AllUsers(db *sql.DB) ([]*User, error) {
+	rows, err := db.Query(
+		`SELECT Users.Username, Users.UserURL, Users.CreatedOn
+		FROM Users`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	users := make([]*User, 0)
+	for rows.Next() {
+		user := new(User)
+		err = rows.Scan(&user.Username, &user.UserURL, &user.Joindate)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
 func NewApp(db *sql.DB, input *Page) (int64, error) {
 	prep, err := db.Prepare(
 		`INSERT INTO Posts (Title, Content, PostURL, CreatorURL)
