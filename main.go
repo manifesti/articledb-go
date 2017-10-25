@@ -24,11 +24,14 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
+// struct with main stuff
 type App struct {
 	db         *sql.DB
 	templates  *template.Template
 	sesStorage *sessions.CookieStore
 }
+
+// structs to be given to templates
 type listData struct {
 	Loginstatus bool
 	Pagesdata   []*dbmodels.Page
@@ -36,6 +39,11 @@ type listData struct {
 type userList struct {
 	Loginstatus bool
 	Userdata    []*dbmodels.User
+}
+type userPage struct {
+	Loginstatus bool
+	Userdata    *dbmodels.User
+	Pagesdata   []*dbmodels.Page
 }
 type singleData struct {
 	Loginstatus bool
@@ -193,21 +201,21 @@ func (env *App) homeRoute(w http.ResponseWriter, req *http.Request) {
 }
 func (env *App) usersRoute(w http.ResponseWriter, req *http.Request) {
 	if req.Method == "GET" {
-		title := req.URL.Path[len("/view/"):]
-		if len(title) == 10 {
-			postlist, err := dbmodels.SingleUserArticles(title, db)
+		if len(req.URL.Path[7:]) == 10 {
+			user, postlist, err := dbmodels.SingleUserArticles(req.URL.Path[7:], env.db)
 			if err != nil {
 				http.Error(w, err.Error(), 500)
 				return
 			}
-			totmpl := new(listData)
+			totmpl := new(userPage)
+			totmpl.Pagesdata = postlist
+			totmpl.Userdata = user
 			session, _ := env.sesStorage.Get(req, "golangcookie")
 			if session.Values["loggedin"] != true {
 				totmpl.Loginstatus = false
 			} else {
 				totmpl.Loginstatus = true
 			}
-			totmpl.Pagesdata = list
 			err = env.templates.ExecuteTemplate(w, "userprofile", totmpl)
 			if err != nil {
 				http.Error(w, err.Error(), 500)

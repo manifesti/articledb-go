@@ -5,7 +5,12 @@
 {{template "headmenu" .}}
 <div class="container">
     <div class="col-md-8 col-md-offset-2">
-        <div class="table-responsive">
+      <h4>User</h4>
+      <h2>{{.Userdata.Username}}</h2>
+      <h4>joined on</h4>
+      <h2>{{.Userdata.Joindate}}</h2>
+      <h4>and has written the following articles:</h4>
+    <div class="table-responsive">
     <table class="table table-stripped">
         <thead>
             <tr>
